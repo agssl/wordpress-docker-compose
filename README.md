@@ -1,38 +1,48 @@
-# WPDC - WordPress Docker Compose
+# WordPress Docker Compose
 
-Easy WordPress development with Docker and Docker Compose.
-
-With this project you can quickly run the following:
-
-- [WordPress and WP CLI](https://hub.docker.com/_/wordpress/)
-- [phpMyAdmin](https://hub.docker.com/r/phpmyadmin/phpmyadmin/)
-- [MySQL](https://hub.docker.com/_/mysql/)
-
-Contents:
-
-- [Requirements](#requirements)
-- [Configuration](#configuration)
-- [Installation](#installation)
-- [Usage](#usage)
+WordPress development with Docker and Docker Compose.
 
 ## Requirements
 
 Make sure you have the latest versions of **Docker** and **Docker Compose** installed on your machine.
 
-Clone this repository or copy the files from this repository into a new folder. In the **docker-compose.yml** file you may change the IP address (in case you run multiple containers) or the database from MySQL to MariaDB.
+Clone this repository or copy the files from this repository into a new folder. In the **docker-compose.yml** file you may change the database from MySQL to MariaDB.
 
-Make sure to [add your user to the `docker` group](https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user) when using Linux.
+```
+git clone https://github.com/agssl/wordpress-docker-compose.git
+```
 
 ## Configuration
 
-Edit the `.env` file to change the default IP address, MySQL root password and WordPress database name.
+Edit the `.env` file to change the `HOSTNAME`, MySQL root password and WordPress database name.
+
+## Setup the nginx-proxy for a custom hostname
+
+Add the `HOSTNAME` to the hostfile in `etc/hosts`. Use [a] to add and [r] to remove host entries
+
+```
+cd ./nginx-proxy
+sh setup-hostfile.sh
+```
+
+Create the proxy network (if not already active)
+
+```
+docker network create proxy
+```
+
+Then start the proxy container
+```
+docker-compose up -d
+```
 
 ## Installation
 
 Open a terminal and `cd` to the folder in which `docker-compose.yml` is saved and run:
 
 ```
-docker-compose up
+cd ..
+docker-compose up -d
 ```
 
 This creates two new folders next to your `docker-compose.yml` file.
@@ -40,9 +50,7 @@ This creates two new folders next to your `docker-compose.yml` file.
 * `wp-data` – used to store and restore database dumps
 * `wp-app` – the location of your WordPress application
 
-The containers are now built and running. You should be able to access the WordPress installation with the configured IP in the browser address. By default it is `http://127.0.0.1`.
-
-For convenience you may add a new entry into your hosts file.
+The containers are now built and running. You should be able to access the WordPress installation with the configured IP in the browser address. By default it is `http://hostname.local`.
 
 ## Usage
 
@@ -90,14 +98,20 @@ docker-compose up
 This will create the containers and populate the database with the given dump. You may set your host entry and change it in the database, or you simply overwrite it in `wp-config.php` by adding:
 
 ```
-define('WP_HOME','http://wp-app.local');
-define('WP_SITEURL','http://wp-app.local');
+define('WP_HOME','http://hostname.local');
+define('WP_SITEURL','http://hostname.local');
 ```
 
 ### Creating database dumps
 
 ```
 ./export.sh
+```
+
+### Replace the existing database with the dump from wp-data
+
+```
+docker-compose down -v
 ```
 
 ### Developing a Theme
@@ -145,9 +159,3 @@ This way you can use the CLI command above as follows:
 ```
 wp plugin list
 ```
-
-### phpMyAdmin
-
-You can also visit `http://127.0.0.1:8080` to access phpMyAdmin after starting the containers.
-
-The default username is `root`, and the password is the same as supplied in the `.env` file.
